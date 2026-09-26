@@ -1,0 +1,26 @@
+[project]
+name = "news-template"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Nicolo", email = "info@pitsch-ing.ch" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "dj-database-url==3.1.2",
+    "django==6.0.7",
+    "django-storages[s3]==1.14.6",
+    "gunicorn==23.0.0",
+    "psycopg[binary]==3.3.4",
+    "wagtail==7.4.2",
+    "wagtail-storages==2.0",
+    "whitenoise==6.12.0",
+]
+
+[project.scripts]
+news-template = "news_template:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
