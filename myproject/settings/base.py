@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "wagtail.sites",
     "wagtail.users",
     "wagtail.snippets",
+    "myproject.documents",  # NPi
     "wagtail.documents",
     "wagtail.images",
     "wagtail.search",
@@ -329,3 +330,6 @@ CACHE_CONTROL_STALE_WHILE_REVALIDATE = int(
 )
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# NPi, use the custom document model
+WAGTAILDOCS_DOCUMENT_MODEL = "documents.FolderDocument"
