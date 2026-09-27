@@ -8,7 +8,6 @@
     {% endblock %}
     <div class="site-padding site-container">
 
-
         <div class="flex flex-col md:flex-row md:items-center py-20">
             <h1 class="font-serif4 [word-spacing:-6px] font-bold text-8xl lg:text-10xl
             md:pr-16
@@ -70,7 +69,6 @@
                         hover:text-mackerel-300 hover:dark:text-white
                         hover:border-mackerel-300 hover:dark:border-white
                         {% endif %}
-
                         "
                     >
                         All
@@ -119,7 +117,6 @@
                     {% include "components/card--article.html" with page=subpage.specific %}
                 {% endfor %}
 
-
                 {% if paginator %}
                     {% include "components/pagination.html" with paginator_page=paginator_page %}
                 {% endif %}
@@ -130,4 +127,3 @@
     {% include_block page.body %}
 
 {% endblock %}
-
