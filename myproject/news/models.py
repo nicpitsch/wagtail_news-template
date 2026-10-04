@@ -7,9 +7,8 @@ from wagtail.fields import RichTextField
 from wagtail.search import index
 
 from wagtail.fields import StreamField
-from myproject.utils.models import BasePage, ArticleTopic
+from myproject.utils.models import BasePage, ArticleTopic, AuthorSnippet
 from myproject.utils.blocks import CaptionedImageBlock, StoryBlock
-
 
 class ArticlePage(BasePage):
     template = "pages/article_page.html"
@@ -75,8 +74,6 @@ class ArticlePage(BasePage):
             return self.publication_date.strftime("%d %b %Y")
         elif self.first_published_at:
             return self.first_published_at.strftime("%d %b %Y")
-
-
 class NewsListingPage(BasePage):
     template = "pages/news_listing_page.html"
     subpage_types = ["news.ArticlePage"]
@@ -109,7 +106,6 @@ class NewsListingPage(BasePage):
             page = paginator.page(paginator.num_pages)
         return (paginator, page, page.object_list, page.has_other_pages())
 
-
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
         queryset = (
@@ -134,6 +130,16 @@ class NewsListingPage(BasePage):
             matching_topic = topic_query_param
             queryset = queryset.filter(topic__slug=topic_query_param)
 
+        # Author filtering
+        article_authors = AuthorSnippet.objects.values("title", "slug").distinct().order_by("title")
+        matching_author = False
+
+        author_query_param = request.GET.get("author")
+        if author_query_param and author_query_param in article_authors.values_list(
+            "slug", flat=True
+        ):
+            matching_author = author_query_param
+            queryset = queryset.filter(author__slug=author_query_param)
 
         # Paginate article pages
         paginator, page, _object_list, is_paginated = self.paginate_queryset(
@@ -146,5 +152,9 @@ class NewsListingPage(BasePage):
         # Topics
         context["topics"] = article_topics
         context["matching_topic"] = matching_topic
+
+        # Authors
+        context["authors"] = article_authors
+        context["matching_author"] = matching_author
 
         return context

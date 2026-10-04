@@ -22,7 +22,6 @@ from myproject.images.models import CustomImage
 from myproject.utils.cache import get_default_cache_control_decorator
 from myproject.utils.query import order_by_pk_position
 
-
 # Related pages
 class PageRelatedPage(Orderable):
     parent = ParentalKey(Page, related_name="page_related_pages")
@@ -34,7 +33,6 @@ class PageRelatedPage(Orderable):
     )
 
     panels = [FieldPanel("page")]
-
 
 # Generic social fields abstract class to add social image/text to any new content type easily.
 class SocialFields(models.Model):
@@ -56,7 +54,6 @@ class SocialFields(models.Model):
             "Social networks",
         )
     ]
-
 
 # Generic listing fields abstract class to add listing image/text to any new content type easily.
 class ListingFields(models.Model):
@@ -94,10 +91,10 @@ class ListingFields(models.Model):
         )
     ]
 
-
 @register_snippet
 class AuthorSnippet(models.Model):
     title = models.CharField(blank=False, max_length=255)
+    slug = models.SlugField(unique=True, max_length=255)
     image = models.ForeignKey(
         "images.CustomImage",
         null=True,
@@ -109,6 +106,33 @@ class AuthorSnippet(models.Model):
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        if self._state.adding and not self.slug:
+            self.slug = self.slugify(self.title)
+            using = kwargs.get("using") or router.db_for_write(
+                type(self), instance=self
+            )
+            kwargs["using"] = using
+            try:
+                with transaction.atomic(using=using):
+                    res = super().save(*args, **kwargs)
+                return res
+            except IntegrityError:
+                pass
+            slugs = set(
+                type(self)
+                ._default_manager.filter(slug__startswith=self.slug)
+                .values_list("slug", flat=True)
+            )
+            i = 1
+            while True:
+                slug = f"{self.slug}_{i}"
+                if slug not in slugs:
+                    self.slug = slug
+                    return super().save(*args, **kwargs)
+                i += 1
+        else:
+            return super().save(*args, **kwargs)
 
 @register_snippet
 class ArticleTopic(models.Model):
@@ -161,7 +185,6 @@ class ArticleTopic(models.Model):
             title += "_%d" % i
         return title
 
-
 @register_snippet
 class Statistic(models.Model):
     statistic = models.CharField(blank=False, max_length=12)
@@ -174,7 +197,6 @@ class Statistic(models.Model):
 
     def __str__(self):
         return self.statistic
-
 
 @register_setting
 class SocialMediaSettings(BaseSiteSetting):
@@ -216,7 +238,6 @@ class SocialMediaSettings(BaseSiteSetting):
         blank=True,
         help_text="Default sharing text to use if social text has not been set on a page.",
     )
-
 
 @register_setting
 class SystemMessagesSettings(BaseSiteSetting):
@@ -299,7 +320,6 @@ class SystemMessagesSettings(BaseSiteSetting):
             return self.placeholder_image
         raise ValidationError("No placeholder image found. Please upload a placeholder image.")
 
-
 # Apply default cache headers on this page model's serve method.
 @method_decorator(get_default_cache_control_decorator(), name="serve")
 class BasePage(SocialFields, ListingFields, Page):
@@ -366,7 +386,6 @@ class BasePage(SocialFields, ListingFields, Page):
                     return soup.text
                 else:
                     return introduction_value
-
 
 BasePage._meta.get_field("seo_title").verbose_name = "Title tag"
 BasePage._meta.get_field("search_description").verbose_name = "Meta description"

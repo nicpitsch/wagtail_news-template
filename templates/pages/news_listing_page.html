@@ -105,11 +105,19 @@
                             {{ topic.title }}
                         </a>
                     {% endfor %}
+                <!-- Author filter -->
+                <select onchange="window.location.href='?author='+this.value">
+                <option value="">All Authors</option>
+                {% for author in authors %}
+                <option value="{{ author.slug }}" {% if matching_author == author.slug %}selected{% endif %}>
+                    {{ author.title }}
+                </option>
+                {% endfor %}
+                </select>                    
                     </div>
                 {% endif %}
             </div>
         </div>
-
 
         {% if paginator_page %}
             <section class="grid grid-cols-1 gap-8 lg:gap-10 pb-20 md:pb-40">
