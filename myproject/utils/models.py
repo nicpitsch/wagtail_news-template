@@ -98,6 +98,7 @@ class ListingFields(models.Model):
 @register_snippet
 class AuthorSnippet(models.Model):
     title = models.CharField(blank=False, max_length=255)
+    slug = models.SlugField(unique=True, max_length=255)
     image = models.ForeignKey(
         "images.CustomImage",
         null=True,
@@ -108,6 +109,34 @@ class AuthorSnippet(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and not self.slug:
+            self.slug = django_slugify(self.title, allow_unicode=True)
+            using = kwargs.get("using") or router.db_for_write(
+                type(self), instance=self
+            )
+            kwargs["using"] = using
+            try:
+                with transaction.atomic(using=using):
+                    res = super().save(*args, **kwargs)
+                return res
+            except IntegrityError:
+                pass
+            slugs = set(
+                type(self)
+                ._default_manager.filter(slug__startswith=self.slug)
+                .values_list("slug", flat=True)
+            )
+            i = 1
+            while True:
+                slug = f"{self.slug}_{i}"
+                if slug not in slugs:
+                    self.slug = slug
+                    return super().save(*args, **kwargs)
+                i += 1
+        else:
+            return super().save(*args, **kwargs)
 
 
 @register_snippet

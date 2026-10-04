@@ -134,6 +134,19 @@ class NewsListingPage(BasePage):
             matching_topic = topic_query_param
             queryset = queryset.filter(topic__slug=topic_query_param)
 
+        # Author filtering
+        article_authors = AuthorSnippet.objects.filter(
+            article_pages__isnull=False
+        ).values("title", "slug").distinct().order_by("title")
+        matching_author = False
+
+        author_query_param = request.GET.get("author")
+        if author_query_param and author_query_param in article_authors.values_list(
+            "slug", flat=True
+        ):
+            matching_author = author_query_param
+            queryset = queryset.filter(author__slug=author_query_param)
+
 
         # Paginate article pages
         paginator, page, _object_list, is_paginated = self.paginate_queryset(
@@ -146,5 +159,9 @@ class NewsListingPage(BasePage):
         # Topics
         context["topics"] = article_topics
         context["matching_topic"] = matching_topic
+
+        # Authors
+        context["authors"] = article_authors
+        context["matching_author"] = matching_author
 
         return context
